@@ -1,10 +1,10 @@
-name: klipper3d deploy
+name: klipper deploy belt feature
 on:
   schedule:
     - cron: "0 0 * * *"
   push:
     branches:
-      - master
+      - belt-printer
     paths:
       - docs/**
       - .github/workflows/klipper3d-deploy.yaml
