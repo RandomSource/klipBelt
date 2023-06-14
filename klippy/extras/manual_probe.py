@@ -13,6 +13,8 @@ class ManualProbe:
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
+        if 'delta' == config.getsection('printer').get('kinematics'):
+            return self.gcode.respond_info("Use BELT_PROBE for belt printer kinematics" )
         # Endstop value for cartesian printers with separate Z axis
         zconfig = config.getsection('stepper_z')
         self.z_position_endstop = zconfig.getfloat('position_endstop', None,

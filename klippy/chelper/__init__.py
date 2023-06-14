@@ -153,6 +153,10 @@ defs_kin_shaper = """
     struct stepper_kinematics * input_shaper_alloc(void);
 """
 
+defs_kin_belt = """
+    struct stepper_kinematics *belt_stepper_alloc(char type);
+"""
+
 defs_serialqueue = """
     #define MESSAGE_MAX 64
     struct pull_queue_message {
