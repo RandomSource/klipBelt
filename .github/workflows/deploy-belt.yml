@@ -7,7 +7,7 @@ on:
       - belt-printer
     paths:
       - docs/**
-      - .github/workflows/klipper3d-deploy.yaml
+      - .github/workflows/deploy-belt.yaml
 jobs:
   deploy:
     runs-on: ubuntu-latest
