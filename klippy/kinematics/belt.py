@@ -1,7 +1,7 @@
 # Code for handling the kinematics of belt printer with 45 degrees
 #
 # Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2023  RaPSoR
+# Copyright (C) 2023  RaPSoR 
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
