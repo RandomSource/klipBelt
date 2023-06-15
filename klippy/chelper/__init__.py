@@ -21,7 +21,7 @@ SOURCE_FILES = [
     'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c',
+    'kin_extruder.c', 'kin_shaper.c', 'kin_belt.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [

@@ -1,10 +1,11 @@
 # Code for handling the kinematics of belt printer with 45 degrees
 #
 # Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2023  RaPSoR 
+# Copyright (C) 2023  RaPSoR
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
+import logging
+import math
 import stepper
 
 
@@ -19,7 +20,7 @@ class BeltKinematics:
             self.rails[1].get_endstops()[0][0].add_stepper(s)
         self.rails[0].setup_itersolve('belt_stepper_alloc', b'+')
         self.rails[1].setup_itersolve('belt_stepper_alloc', b'-')
-        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
+        self.rails[2].setup_itersolve('belt_stepper_alloc', b'z')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)

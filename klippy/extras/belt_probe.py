@@ -4,7 +4,9 @@
 # Copyright (C) 2023  RaPSoR
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, bisect
+import logging
+import bisect
+
 
 class BeltProbe:
     def __init__(self, config):
@@ -15,12 +17,12 @@ class BeltProbe:
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
         if 'belt' != config.getsection('printer').get('kinematics'):
-            return self.gcode.respond_info("Use MANUEL_PROBE for other kinematics" )
+            return self.gcode.respond_info("Use MANUEL_PROBE for other kinematics")
         # Endstop value for cartesian printers with separate Z axis
         yconfig = config.getsection('stepper_y')
         self.y_position_endstop = yconfig.getfloat('position_endstop', None,
                                                    note_valid=False)
-        
+
         self.gcode.register_command(
             'Y_ENDSTOP_CALIBRATE', self.cmd_Y_ENDSTOP_CALIBRATE,
             desc=self.cmd_Y_ENDSTOP_CALIBRATE_help)
@@ -29,9 +31,11 @@ class BeltProbe:
             self.cmd_Y_OFFSET_APPLY_ENDSTOP,
             desc=self.cmd_Y_OFFSET_APPLY_ENDSTOP_help)
         self.reset_status()
+
     def manual_probe_finalize(self, kin_pos):
         if kin_pos is not None:
             self.gcode.respond_info("Y position is %.3f" % (kin_pos[2],))
+
     def reset_status(self):
         self.status = {
             'is_active': False,
@@ -39,15 +43,18 @@ class BeltProbe:
             'y_position_lower': None,
             'y_position_upper': None
         }
+
     def get_status(self, eventtime):
         return self.status
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
+
     def cmd_MANUAL_PROBE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.manual_probe_finalize)
+
     def y_endstop_finalize(self, kin_pos):
         if kin_pos is None:
             return
-        # maybe faulty calculation of kin_pos  
+        # maybe faulty calculation of kin_pos
         y_pos = self.y_position_endstop - kin_pos[1]
         self.gcode.respond_info(
             "stepper_y: position_endstop: %.3f\n"
@@ -56,9 +63,11 @@ class BeltProbe:
         configfile = self.printer.lookup_object('configfile')
         configfile.set('stepper_y', 'position_endstop', "%.3f" % (y_pos,))
     cmd_Y_ENDSTOP_CALIBRATE_help = "Calibrate a Y endstop"
+
     def cmd_Y_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.y_endstop_finalize)
-    def cmd_Y_OFFSET_APPLY_ENDSTOP(self,gcmd):
+
+    def cmd_Y_OFFSET_APPLY_ENDSTOP(self, gcmd):
         offset = self.gcode_move.get_status()['homing_origin'].y
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
@@ -70,10 +79,12 @@ class BeltProbe:
                 "The SAVE_CONFIG command will update the printer config file\n"
                 "with the above and restart the printer." % (new_calibrate))
             configfile.set('stepper_y', 'position_endstop',
-                "%.3f" % (new_calibrate,))
+                           "%.3f" % (new_calibrate,))
     cmd_Y_OFFSET_APPLY_ENDSTOP_help = "Adjust the Y endstop_position"
 
 # Verify that a manual probe isn't already in progress
+
+
 def verify_no_manual_probe(printer):
     gcode = printer.lookup_object('gcode')
     try:
@@ -83,10 +94,13 @@ def verify_no_manual_probe(printer):
             "Already in a Belt probe. Use ABORT to abort it.")
     gcode.register_command('ACCEPT', None)
 
+
 Y_BOB_MINIMUM = 0.500
 BISECT_MAX = 0.200
 
 # Helper script to determine a Y height for belt printer
+
+
 class BeltProbeHelper:
     def __init__(self, printer, gcmd, finalize_callback):
         self.printer = printer
@@ -111,6 +125,7 @@ class BeltProbeHelper:
             "Finish with ACCEPT or ABORT command.")
         self.start_position = self.toolhead.get_position()
         self.report_y_status()
+
     def get_kinematics_pos(self):
         toolhead_pos = self.toolhead.get_position()
         if toolhead_pos == self.last_toolhead_pos:
@@ -123,6 +138,7 @@ class BeltProbeHelper:
         self.last_toolhead_pos = toolhead_pos
         self.last_kinematics_pos = kin_pos
         return kin_pos
+
     def move_y(self, y_pos):
         curpos = self.toolhead.get_position()
         try:
@@ -133,6 +149,7 @@ class BeltProbeHelper:
         except self.printer.command_error as e:
             self.finalize(False)
             raise
+
     def report_y_status(self, warn_no_change=False, prev_pos=None):
         # Get position
         kin_pos = self.get_kinematics_pos()
@@ -164,6 +181,7 @@ class BeltProbeHelper:
         self.gcode.respond_info("Y position: %s --> %.3f <-- %s"
                                 % (prev_str, y_pos, next_str))
     cmd_ACCEPT_help = "Accept the current Y position"
+
     def cmd_ACCEPT(self, gcmd):
         pos = self.toolhead.get_position()
         start_pos = self.start_position
@@ -175,9 +193,11 @@ class BeltProbeHelper:
             return
         self.finalize(True)
     cmd_ABORT_help = "Abort belt probing tool"
+
     def cmd_ABORT(self, gcmd):
         self.finalize(False)
     cmd_TESTY_help = "Move to new Y height"
+
     def cmd_TESTY(self, gcmd):
         # Store current position for later reference
         kin_pos = self.get_kinematics_pos()
@@ -207,6 +227,7 @@ class BeltProbeHelper:
         # Move to given position and report it
         self.move_y(next_y_pos)
         self.report_y_status(next_y_pos != y_pos, y_pos)
+
     def finalize(self, success):
         self.manual_probe.reset_status()
         self.gcode.register_command('ACCEPT', None)
@@ -217,6 +238,7 @@ class BeltProbeHelper:
         if success:
             kin_pos = self.get_kinematics_pos()
         self.finalize_callback(kin_pos)
+
 
 def load_config(config):
     return BeltProbe(config)
