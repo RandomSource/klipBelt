@@ -34,7 +34,7 @@ class BeltProbe:
 
     def belt_probe_finalize(self, kin_pos):
         if kin_pos is not None:
-            self.gcode.respond_info("Y position is %.3f" % (kin_pos[2],))
+            self.gcode.respond_info("Y position is %.3f" % (kin_pos[1],))
 
     def reset_status(self):
         self.status = {
@@ -107,7 +107,7 @@ class BeltProbeHelper:
         self.finalize_callback = finalize_callback
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.manual_probe = self.printer.lookup_object('manual_probe')
+        self.belt_probe = self.printer.lookup_object('belt_probe')
         self.speed = gcmd.get_float("SPEED", 5.)
         self.past_positions = []
         self.last_toolhead_pos = self.last_kinematics_pos = None
@@ -143,9 +143,9 @@ class BeltProbeHelper:
         curpos = self.toolhead.get_position()
         try:
             y_bob_pos = y_pos + Y_BOB_MINIMUM
-            if curpos[2] < y_bob_pos:
-                self.toolhead.manual_move([None, None, y_bob_pos], self.speed)
-            self.toolhead.manual_move([None, None, y_pos], self.speed)
+            if curpos[1] < y_bob_pos:
+                self.toolhead.manual_move([None, y_bob_pos, None], self.speed)
+            self.toolhead.manual_move([None, y_pos, None], self.speed)
         except self.printer.command_error as e:
             self.finalize(False)
             raise
@@ -171,7 +171,7 @@ class BeltProbeHelper:
         if next_pos < len(pp):
             next_pos_val = pp[next_pos]
             next_str = "%.3f" % (next_pos_val,)
-        self.manual_probe.status = {
+        self.belt_probe.status = {
             'is_active': True,
             'y_position': y_pos,
             'y_position_lower': prev_pos_val,
@@ -185,7 +185,7 @@ class BeltProbeHelper:
     def cmd_ACCEPT(self, gcmd):
         pos = self.toolhead.get_position()
         start_pos = self.start_position
-        if pos[:2] != start_pos[:2] or pos[2] >= start_pos[2]:
+        if pos[:2] != start_pos[:2] or pos[1] >= start_pos[1]:
             gcmd.respond_info(
                 "Belt probe failed! Use TESTY commands to position the\n"
                 "nozzle prior to running ACCEPT.")
@@ -229,7 +229,7 @@ class BeltProbeHelper:
         self.report_y_status(next_y_pos != y_pos, y_pos)
 
     def finalize(self, success):
-        self.manual_probe.reset_status()
+        self.belt_probe.reset_status()
         self.gcode.register_command('ACCEPT', None)
         self.gcode.register_command('NEXT', None)
         self.gcode.register_command('ABORT', None)
