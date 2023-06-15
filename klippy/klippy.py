@@ -4,9 +4,24 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, gc, optparse, logging, time, collections, importlib
-import util, reactor, queuelogger, msgproto
-import gcode, configfile, pins, mcu, toolhead, webhooks
+import sys
+import os
+import gc
+import optparse
+import logging
+import time
+import collections
+import importlib
+import util
+import reactor
+import queuelogger
+import msgproto
+import gcode
+import configfile
+import pins
+import mcu
+import toolhead
+import webhooks
 
 message_ready = "Printer is ready"
 
@@ -47,9 +62,11 @@ config, and restart the host software.
 Printer is shutdown
 """
 
+
 class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
+
     def __init__(self, main_reactor, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
@@ -63,10 +80,13 @@ class Printer:
         # Init printer components that must be setup prior to config
         for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
+
     def get_start_args(self):
         return self.start_args
+
     def get_reactor(self):
         return self.reactor
+
     def get_state_message(self):
         if self.state_message == message_ready:
             category = "ready"
@@ -77,25 +97,30 @@ class Printer:
         else:
             category = "error"
         return self.state_message, category
+
     def is_shutdown(self):
         return self.in_shutdown_state
+
     def _set_state(self, msg):
         if self.state_message in (message_ready, message_startup):
             self.state_message = msg
         if (msg != message_ready
-            and self.start_args.get('debuginput') is not None):
+                and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
+
     def add_object(self, name, obj):
         if name in self.objects:
             raise self.config_error(
                 "Printer object '%s' already created" % (name,))
         self.objects[name] = obj
+
     def lookup_object(self, name, default=configfile.sentinel):
         if name in self.objects:
             return self.objects[name]
         if default is configfile.sentinel:
             raise self.config_error("Unknown config object '%s'" % (name,))
         return default
+
     def lookup_objects(self, module=None):
         if module is None:
             return list(self.objects.items())
@@ -105,6 +130,7 @@ class Printer:
         if module in self.objects:
             return [(module, self.objects[module])] + objs
         return objs
+
     def load_object(self, config, section, default=configfile.sentinel):
         if section in self.objects:
             return self.objects[section]
@@ -129,6 +155,7 @@ class Printer:
             raise self.config_error("Unable to load module '%s'" % (section,))
         self.objects[section] = init_func(config.getsection(section))
         return self.objects[section]
+
     def _read_config(self):
         self.objects['configfile'] = pconfig = configfile.PrinterConfig(self)
         config = pconfig.read_main_config()
@@ -143,6 +170,7 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
+
     def _build_protocol_error_message(self, e):
         host_version = self.start_args['software_version']
         msg_update = []
@@ -170,6 +198,7 @@ class Printer:
         msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
         msg += [message_protocol_error2, str(e)]
         return "\n".join(msg)
+
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -207,6 +236,7 @@ class Printer:
             logging.exception("Unhandled exception during ready callback")
             self.invoke_shutdown("Internal error during ready callback: %s"
                                  % (str(e),))
+
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
@@ -236,11 +266,13 @@ class Printer:
         except:
             logging.exception("Unhandled exception during post run")
         return run_result
+
     def set_rollover_info(self, name, info, log=True):
         if log:
             logging.info(info)
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
+
     def invoke_shutdown(self, msg):
         if self.in_shutdown_state:
             return
@@ -254,13 +286,17 @@ class Printer:
                 logging.exception("Exception during shutdown handler")
         logging.info("Reactor garbage collection: %s",
                      self.reactor.get_gc_stats())
+
     def invoke_async_shutdown(self, msg):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg)))
+
     def register_event_handler(self, event, callback):
         self.event_handlers.setdefault(event, []).append(callback)
+
     def send_event(self, event, *params):
         return [cb(*params) for cb in self.event_handlers.get(event, [])]
+
     def request_exit(self, result):
         if self.run_result is None:
             self.run_result = result
@@ -284,7 +320,10 @@ def import_test():
                     continue
                 module_name = fname
             importlib.import_module(mname + '.' + module_name)
+            logging.info("Import Test")
+            logging.info(mname + '.' + module_name)
     sys.exit(0)
+
 
 def arg_dictionary(option, opt_str, value, parser):
     key, fname = "dictionary", value
@@ -294,6 +333,7 @@ def arg_dictionary(option, opt_str, value, parser):
     if parser.values.dictionary is None:
         parser.values.dictionary = {}
     parser.values.dictionary[key] = fname
+
 
 def main():
     usage = "%prog [options] <config file>"
@@ -402,6 +442,7 @@ def main():
 
     if res == 'error_exit':
         sys.exit(-1)
+
 
 if __name__ == '__main__':
     main()
