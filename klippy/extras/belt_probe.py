@@ -14,7 +14,7 @@ class BeltProbe:
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode_move = self.printer.load_object(config, "gcode_move")
-        self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
+        self.gcode.register_command('BELT_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
         if 'belt' != config.getsection('printer').get('kinematics'):
             return self.gcode.respond_info("Use MANUEL_PROBE for other kinematics")
